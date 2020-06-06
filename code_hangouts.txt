@@ -1,0 +1,41 @@
+CREATE or REPLACE TABLE HNG AS
+SELECT SPLIT_PART("Date",',',1) AS DEN, SPLIT_PART(DEN,' ',2) AS DAY, SPLIT_PART(DEN,' ',1) AS MONTH, SPLIT_PART("Date",',',2) AS YEAR, SPLIT_PART("Date",',',3) AS TIME, 
+    CASE
+    WHEN MONTH = 'Jan' THEN 01
+    WHEN MONTH = 'Feb' THEN 02
+    WHEN MONTH = 'Mar' THEN 03
+    WHEN MONTH = 'Apr' THEN 04
+    WHEN MONTH = 'May' THEN 05
+    WHEN MONTH = 'Jun' THEN 06
+    WHEN MONTH = 'Jul' THEN 07
+    WHEN MONTH = 'Aug' THEN 08
+    WHEN MONTH = 'Sep' THEN 09
+    WHEN MONTH = 'Oct' THEN 10
+    WHEN MONTH = 'Nov' THEN 11
+    WHEN MONTH = 'Dec' THEN 12
+    END AS MESIC,
+DATE_FROM_PARTS(YEAR, MESIC, DAY) AS DATE,
+SUBSTR(TIME,0,12)::time AS XX,
+SUBSTR(TIME,13, 10) AS GMT1,
+SPLIT_PART(XX,':',1) AS HODINA,*
+FROM "hangouts";
+
+CREATE OR REPLACE TABLE HNG_OUT2 AS
+SELECT DATE, 
+    XX AS time, 
+    trim(gmt1) as gmt, 
+    "Event_Name", 
+    "Event_Description", 
+    "Meeting_Code", 
+    "Participant_Identifier", 
+    "Participant_Outside_Organisation", 
+    "Client_Type", 
+    "Organizer_Email", 
+    "Product_Type", 
+    "Duration", 
+    "Call_Rating_out_of_5", 
+    "City",
+    "Country",
+    "Calendar_Event_Id",
+    "Conference_ID"
+FROM hng;
