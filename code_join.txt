@@ -1,0 +1,380 @@
+CREATE TABLE "Hng_Zoom_Slack_HR" AS
+SELECT 'Hangouts' AS tool // varchar // Hangouts OR Zoom OR Slack
+      ,h."Conference_ID" AS c_id // varchar // H_Conference_ID OR Z_id OR S_room_id
+      ,h."Calendar_Event_Id" AS calendar_id // varchar // H_Calendar_Event_ID OR ---- OR ---
+      ,NULL AS name_call // varchat // --- OR Z_name OR ---
+      ,CASE
+         WHEN h."Participant_Identifier" IS NULL THEN NULL
+         ELSE h."Participant_Identifier"
+       END AS participant
+       //,h."Participant_Identifier" AS participant // varchar // (H_Participant_Identifier OR Z_participants OR S_room_participant_history) = anonymized_participant
+      ,h."Participant_Outside_Organisation" AS p_outside // boolean // H_Participant_Outside_Organisation OR --- OR ---
+      ,CASE
+         WHEN h."Organizer_Email" IS NULL THEN NULL
+         ELSE h."Organizer_Email"
+       END AS created_by
+       //,h."Organizer_Email" AS created_by // varchar // H_Organizer_Email OR Z_created_by OR S_user // pozor, nemám zanonymizované
+       // scheaduled_date varchar // Pro všechny Cal_Start AND Cal_End - to pak budeme muset napasovat, ale až v dalším kroku
+       // scheaduled_time_start varchar // Pro všechny Cal_Start AND Cal_End - to pak budeme muset napasovat, ale až v dalším kroku
+       // scheaduled_time_end varchar // Cal_Start AND Cal_End - to pak budeme muset napasovat, ale až v dalším kroku
+      ,NULL AS open_date // date // --- OR Z_open_date OR S_room_date_start (UNIX time)
+      ,NULL AS open_time // time // --- OR Z_open_time OR S_room_date_start (UNIX time)
+      ,NULL AS close_date // date // --- OR Z_close_time OR S_room_date_end (UNIX time)
+      ,NULL AS close_time // time // --- OR Z_close_time OR S_room_date_end (UNIX time)
+      ,NULL AS c_duration_sec // int // --- OR Z_duration_min OR S_[room_date_start-room_date_end]
+      ,h."DATE" AS entry_date // date // H_DATE OR Z_entry_date OR ---
+      ,h."TIME"::time AS entry_time // time // H_TIME OR Z_entry_time OR ---
+      ,NULL AS leave_date // date // --- OR Z_leave_date OR ---
+      ,NULL AS leave_time // time // --- OR Z_leave_time OR ---
+      ,h."Duration"::int AS p_duration_sec // int // H_Duration OR Z_[leave_time-entry_time] OR --- 
+      ,h."City" AS c_location // varchar // H_City OR --- OR ---
+      ,hr."anonym_employee" AS p_anonym
+      ,hr."ID" AS slack_id
+      ,hr."main_department" AS department
+      ,hr."supervisor_email" AS supervisor
+      ,hr."position" AS position
+      ,hr."location" AS employee_location
+      ,hr."nickname_anonymous" AS anonym_nickname
+FROM "hng" AS h
+LEFT JOIN "hr" AS hr
+ON h."Participant_Identifier" = hr."email"
+UNION ALL
+SELECT 'Slack' AS tool // varchar // Hangouts OR Zoom OR Slack
+      ,s."room_id" AS c_id // varchar // H_Conference_ID OR Z_id OR S_room_id
+      ,NULL AS calendar_id // varchar // H_Calendar_Event_ID OR ---- OR ---
+      ,NULL AS name_call // varchat // --- OR Z_name OR ---
+      ,CASE
+         WHEN s."room_participant_history" LIKE hr."ID" THEN hr."email"
+         ELSE NULL
+       END AS participant
+       //,hr."email" AS participant // varchar // (H_Participant_Identifier OR Z_participants OR S_room_participant_history) = anonymized_participant
+      ,CASE
+         WHEN participant IS NULL THEN 'Yes'
+         ELSE 'No'
+       END AS p_outside
+        //NULL AS p_outside_kont // boolean // H_Participant_Outside_Organisation OR --- OR ---
+      ,CASE
+         WHEN s."room_created_by" LIKE 'UG075BP5F' THEN (anonymized)
+         WHEN s."room_created_by" LIKE 'UG1SRQTDM' THEN (anonymized)
+         WHEN s."room_created_by" LIKE 'UG2KPJPBN' THEN (anonymized)
+         WHEN s."room_created_by" LIKE 'UGH9CNWB0' THEN (anonymized)
+         WHEN s."room_created_by" LIKE 'UGX65MKK8' THEN (anonymized)
+         WHEN s."room_created_by" LIKE 'UGX7A8H7U' THEN (anonymized)
+         WHEN s."room_created_by" LIKE 'UH267UUHE' THEN (anonymized)
+         WHEN s."room_created_by" LIKE 'UH2RUBSQH' THEN (anonymized)
+         WHEN s."room_created_by" LIKE 'UH9ARP804' THEN (anonymized)
+         WHEN s."room_created_by" LIKE 'UH9R2956G' THEN (anonymized)
+         WHEN s."room_created_by" LIKE 'UHU0745PB' THEN (anonymized)
+         WHEN s."room_created_by" LIKE 'UJPAWTADV' THEN (anonymized)
+         WHEN s."room_created_by" LIKE 'UL0UKFVGV' THEN (anonymized)
+         WHEN s."room_created_by" LIKE 'ULQHZSEQ2' THEN  (anonymized)
+         WHEN s."room_created_by" LIKE 'UN8B69U01' THEN (anonymized)
+         WHEN s."room_created_by" LIKE 'UPGMSJWVB' THEN (anonymized)
+         WHEN s."room_created_by" LIKE 'UQGSR9S4X' THEN (anonymized)
+         WHEN s."room_created_by" LIKE 'USZ6S49JR' THEN (anonymized)
+         WHEN s."room_created_by" LIKE 'UTF2GMN4B' THEN (anonymized)
+         WHEN s."room_created_by" LIKE 'UTMLR9F61' THEN (anonymized)
+         WHEN s."room_created_by" LIKE 'UTUU5639B' THEN (anonymized)
+         WHEN s."room_created_by" LIKE 'UUBG1LZ4Z' THEN (anonymized)
+         WHEN s."room_created_by" LIKE 'UUS16MVJB' THEN (anonymized)
+         ELSE NULL
+       END AS created_by // pozor, nemám zanonymizované
+       //,s."user" AS created_by // varchar // (H_Organizer_Email OR Z_created_by OR S_room_created_by) = anonymized_emloyee
+       // scheaduled_date varchar // Pro všechny Cal_Start AND Cal_End - to pak budeme muset napasovat, ale až v dalším kroku
+       // scheaduled_time_start varchar // Pro všechny Cal_Start AND Cal_End - to pak budeme muset napasovat, ale až v dalším kroku
+       // scheaduled_time_end varchar // Cal_Start AND Cal_End - to pak budeme muset napasovat, ale až v dalším kroku
+      ,s."OPEN_DATE" AS open_date // date // --- OR Z_open_date OR S_room_date_start (UNIX time)
+      ,s."OPEN_TIME" AS open_time // time // --- OR Z_open_time OR S_room_date_start (UNIX time)
+      ,s."CLOSE_DATE" AS close_date // date // --- OR Z_close_time OR S_room_date_end (UNIX time)
+      ,s."CLOSE_TIME" AS close_time // time // --- OR Z_close_time OR S_room_date_end (UNIX time)
+      ,DATEDIFF(second, s.OPEN_TIME::time, s.CLOSE_TIME::time)::int AS c_duration_sec // int // --- OR Z_duration_min OR S_[room_date_start-room_date_end]
+      ,NULL AS entry_date // date // H_DATE OR Z_entry_date OR ---
+      ,NULL AS entry_time // time // H_TIME OR Z_entry_time OR ---
+      ,NULL AS leave_date // date // --- OR Z_leave_date OR ---
+      ,NULL AS leave_time // time // --- OR Z_leave_time OR ---
+      ,NULL AS p_duration_sec // int // H_Duration OR Z_[leave_time-entry_time] OR --- 
+      ,NULL AS location // varchar // H_City OR --- OR ---
+      ,hr."anonym_employee" AS p_anonym
+      ,hr."ID" AS slack_id
+      ,hr."main_department" AS department
+      ,hr."supervisor_email" AS supervisor
+      ,hr."position" AS position
+      ,hr."location" AS employee_location
+      ,hr."nickname_anonymous" AS anonym_nickname
+FROM "slack" as s
+LEFT JOIN "hr" AS hr
+ON s."room_participant_history" = hr."ID"
+UNION ALL
+SELECT 'Zoom' AS tool // varchar // Hangouts OR Zoom OR Slack
+      ,z."id" AS c_id // varchar // H_Conference_ID OR Z_id OR S_room_id
+      ,NULL AS calendar_id // varchar // H_Calendar_Event_ID OR ---- OR ---
+      ,z."name" AS name_call // varchar // --- OR Z_name OR ---
+      ,CASE
+         WHEN z."participants" LIKE 'ANONYMOUS_36' THEN (anonymized)
+         WHEN z."participants" LIKE 'ANONYMOUS_27' THEN (anonymized)
+         WHEN z."participants" LIKE 'ANONYMOUS_5' THEN (anonymized)
+         WHEN z."participants" LIKE 'ANONYMOUS_23' THEN (anonymized)
+         WHEN z."participants" LIKE 'ANONYMOUS_2' THEN (anonymized)
+         WHEN z."participants" LIKE 'ANONYMOUS_30' THEN (anonymized)
+         WHEN z."participants" LIKE 'ANONYMOUS_13' THEN (anonymized)
+         WHEN z."participants" LIKE 'ANONYMOUS_24' THEN (anonymized)
+         WHEN z."participants" LIKE 'ANONYMOUS_22' THEN (anonymized)
+         WHEN z."participants" LIKE 'ANONYMOUS_40' THEN (anonymized)
+         WHEN z."participants" LIKE 'ANONYMOUS_12' THEN (anonymized)
+         WHEN z."participants" LIKE 'ANONYMOUS_25' THEN (anonymized)
+         WHEN z."participants" LIKE 'ANONYMOUS_10' THEN (anonymized)
+         WHEN z."participants" LIKE 'ANONYMOUS_14' THEN  (anonymized)
+         WHEN z."participants" LIKE 'ANONYMOUS_16' THEN (anonymized)
+         WHEN z."participants" LIKE 'ANONYMOUS_6' THEN (anonymized)
+         WHEN z."participants" LIKE 'ANONYMOUS_31' THEN (anonymized)
+         WHEN z."participants" LIKE 'ANONYMOUS_9' THEN (anonymized)
+         WHEN z."participants" LIKE 'ANONYMOUS_15' THEN (anonymized)
+         WHEN z."participants" LIKE 'ANONYMOUS_29' THEN (anonymized)
+         WHEN z."participants" LIKE 'ANONYMOUS_11' THEN (anonymized)
+         WHEN z."participants" LIKE 'ANONYMOUS_21' THEN (anonymized)
+         WHEN z."participants" LIKE 'ANONYMOUS_42' THEN (anonymized)
+         WHEN z."participants" LIKE 'ANONYMOUS_8' THEN (anonymized)
+         WHEN z."participants" LIKE 'ANONYMOUS_41' THEN (anonymized)
+         WHEN z."participants" LIKE 'ANONYMOUS_32' THEN (anonymized)
+         WHEN z."participants" LIKE 'ANONYMOUS_20' THEN (anonymized)
+         WHEN z."participants" LIKE 'ANONYMOUS_28' THEN (anonymized)
+         WHEN z."participants" LIKE 'ANONYMOUS_7' THEN (anonymized)
+         WHEN z."participants" LIKE 'ANONYMOUS_33' THEN (anonymized)
+         WHEN z."participants" LIKE 'ANONYMOUS_35' THEN (anonymized)
+         WHEN z."participants" LIKE 'ANONYMOUS_3' THEN (anonymized)
+         WHEN z."participants" LIKE 'ANONYMOUS_39' THEN (anonymized)
+         WHEN z."participants" LIKE 'ANONYMOUS_34' THEN (anonymized)
+         WHEN z."participants" LIKE 'ANONYMOUS_4' THEN (anonymized)
+         WHEN z."participants" LIKE 'ANONYMOUS_26' THEN (anonymized)
+         WHEN z."participants" LIKE 'ANONYMOUS_1' THEN (anonymized)
+         WHEN z."participants" LIKE 'ANONYMOUS_19' THEN (anonymized)
+         ELSE NULL
+       END AS participant
+       //,z."participants" AS participant // varchar // (H_Participant_Identifier OR Z_participants OR S_room_participant_history) = anonymized_participant
+      ,CASE
+         WHEN participant IS NULL THEN 'Yes'
+         ELSE 'No'
+       END AS p_outside
+       //,NULL AS p_outside // boolean // H_Participant_Outside_Organisation OR --- OR ---
+      ,z."created_by" AS created_by // varchar // H_Organizer_Email OR Z_created_by OR S_user // pozor, nemám zanonymizované
+       // scheaduled_date varchar // Pro všechny Cal_Start AND Cal_End - to pak budeme muset napasovat, ale až v dalším kroku
+       // scheaduled_time_start varchar // Pro všechny Cal_Start AND Cal_End - to pak budeme muset napasovat, ale až v dalším kroku
+       // scheaduled_time_end varchar // Cal_Start AND Cal_End - to pak budeme muset napasovat, ale až v dalším kroku
+      ,z."open_date" AS open_date // date // --- OR Z_open_date OR S_room_date_start (UNIX time)
+      ,z."open_time" AS open_time // time // --- OR Z_open_time OR S_room_date_start (UNIX time)
+      ,z."close_date" AS close_date // date // --- OR Z_close_time OR S_room_date_end (UNIX time)
+      ,z."close_time" AS close_time // time // --- OR Z_close_time OR S_room_date_end (UNIX time)
+      ,z."duration_min"::int * 60 AS c_duration_sec // int // --- OR Z_duration_min OR S_[room_date_start-room_date_end]
+      ,z."entry_date" AS entry_date // date // H_DATE OR Z_entry_date OR ---
+      ,z."entry_time" AS entry_time // time // H_TIME OR Z_entry_time OR ---
+      ,z."leave_date" AS leave_date // date // --- OR Z_leave_date OR ---
+      ,z."leave_time" AS leave_time // time // --- OR Z_leave_time OR ---
+      ,DATEDIFF(second, z."entry_time"::time, z."leave_time"::time)::int AS p_duration_sec // int // H_Duration OR Z_[leave_time-entry_time] OR --- 
+      ,NULL AS location // varchar // H_City OR --- OR ---
+      ,hr."anonym_employee" AS p_anonym
+      ,hr."ID" AS slack_id
+      ,hr."main_department" AS department
+      ,hr."supervisor_email" AS supervisor
+      ,hr."position" AS position
+      ,hr."location" AS employee_location
+      ,hr."nickname_anonymous" AS anonym_nickname
+FROM "zoom" AS z
+LEFT JOIN "hr" AS hr
+ON z."participants" = hr."nickname_anonymous";
+
+CREATE TEMPORARY TABLE "temp1" AS
+SELECT *,
+       CASE
+        WHEN OPEN_DATE = '' THEN ENTRY_DATE
+        ELSE OPEN_DATE
+       END AS DATE,
+       CASE
+        WHEN C_DURATION_SEC = '' THEN P_DURATION_SEC
+        ELSE C_DURATION_SEC
+       END AS C_DURATION_SEC_UPG,
+       C_DURATION_SEC_UPG::int/60 AS C_DURATION_MIN_UPG,
+       CASE
+        WHEN C_DURATION_MIN_UPG::int < 2 THEN NULL
+        ELSE C_DURATION_MIN_UPG
+       END AS C_DURATION_MIN_UPG2
+FROM "hng-zoom-slack-hr";
+
+CREATE TEMPORARY TABLE "temp2" AS
+SELECT t1.*,
+       t2.C_DURATION_MIN_UPG3
+FROM "temp1" AS t1
+LEFT JOIN 
+(SELECT C_ID,
+        MAX(C_DURATION_MIN_UPG2) AS C_DURATION_MIN_UPG3
+ FROM "temp1"
+ GROUP BY C_ID) AS t2
+ON t1.C_ID = t2.C_ID;
+
+--DROP TABLE "zoom1";
+
+CREATE TEMPORARY TABLE "temp3" AS
+SELECT *,
+       C_ID || LEAVE_TIME || ENTRY_TIME || PORADI AS C_ID_LEAVE_ENTRY_TIME_PORADI
+FROM (
+SELECT ROW_NUMBER() OVER (partition by TOOL ORDER BY C_ID, ENTRY_TIME, LEAVE_TIME DESC) AS PORADI,
+       *
+FROM "temp2");
+
+CREATE TEMPORARY TABLE "zoom1" AS
+SELECT *,
+       "id" || "leave_time" || "entry_time" || PORADI AS "id_leave_entry_time_PORADI"
+FROM (
+SELECT ROW_NUMBER() OVER (ORDER BY "id", "entry_time", "leave_time" DESC) AS PORADI,
+       *
+FROM "zoom");
+
+CREATE TEMPORARY TABLE "temp4" AS
+SELECT t1.*,
+       t2."participants"
+FROM "temp3" AS t1
+LEFT JOIN "zoom1" AS t2
+ON t1.C_ID_LEAVE_ENTRY_TIME_PORADI = t2."id_leave_entry_time_PORADI";
+
+CREATE TEMPORARY TABLE "temp5" AS
+SELECT TOOL, C_ID, CALENDAR_ID, NAME_CALL, PARTICIPANT, P_OUTSIDE, CREATED_BY, OPEN_DATE, OPEN_TIME, CLOSE_DATE, CLOSE_TIME, C_DURATION_SEC, ENTRY_DATE, ENTRY_TIME, LEAVE_DATE, LEAVE_TIME, P_DURATION_SEC, C_LOCATION, P_ANONYM, SLACK_ID, DEPARTMENT, SUPERVISOR, POSITION, EMPLOYEE_LOCATION, ANONYM_NICKNAME, DATE, C_DURATION_SEC_UPG, C_DURATION_MIN_UPG, C_DURATION_MIN_UPG2, C_DURATION_MIN_UPG3, "participants"   
+FROM "temp4";
+
+CREATE TEMPORARY TABLE "temp6" AS
+SELECT *,
+       CASE
+         WHEN "participants" LIKE 'ANONYMOUS_36' THEN (anonymized)
+         WHEN "participants" LIKE 'ANONYMOUS_27' THEN (anonymized)
+         WHEN "participants" LIKE 'ANONYMOUS_5' THEN (anonymized)
+         WHEN "participants" LIKE 'ANONYMOUS_23' THEN (anonymized)
+         WHEN "participants" LIKE 'ANONYMOUS_2' THEN (anonymized)
+         WHEN "participants" LIKE 'ANONYMOUS_30' THEN (anonymized)
+         WHEN "participants" LIKE 'ANONYMOUS_13' THEN (anonymized)
+         WHEN "participants" LIKE 'ANONYMOUS_24' THEN (anonymized)
+         WHEN "participants" LIKE 'ANONYMOUS_22' THEN (anonymized)
+         WHEN "participants" LIKE 'ANONYMOUS_40' THEN (anonymized)
+         WHEN "participants" LIKE 'ANONYMOUS_12' THEN (anonymized)
+         WHEN "participants" LIKE 'ANONYMOUS_25' THEN (anonymized)
+         WHEN "participants" LIKE 'ANONYMOUS_10' THEN (anonymized)
+         WHEN "participants" LIKE 'ANONYMOUS_14' THEN  (anonymized)
+         WHEN "participants" LIKE 'ANONYMOUS_16' THEN (anonymized)
+         WHEN "participants" LIKE 'ANONYMOUS_6' THEN (anonymized)
+         WHEN "participants" LIKE 'ANONYMOUS_31' THEN (anonymized)
+         WHEN "participants" LIKE 'ANONYMOUS_9' THEN (anonymized)
+         WHEN "participants" LIKE 'ANONYMOUS_15' THEN (anonymized)
+         WHEN "participants" LIKE 'ANONYMOUS_29' THEN (anonymized)
+         WHEN "participants" LIKE 'ANONYMOUS_11' THEN (anonymized)
+         WHEN "participants" LIKE 'ANONYMOUS_21' THEN (anonymized)
+         WHEN "participants" LIKE 'ANONYMOUS_42' THEN (anonymized)
+         WHEN "participants" LIKE 'ANONYMOUS_8' THEN (anonymized)
+         WHEN "participants" LIKE 'ANONYMOUS_41' THEN (anonymized)
+         WHEN "participants" LIKE 'ANONYMOUS_32' THEN (anonymized)
+         WHEN "participants" LIKE 'ANONYMOUS_20' THEN (anonymized)
+         WHEN "participants" LIKE 'ANONYMOUS_28' THEN (anonymized)
+         WHEN "participants" LIKE 'ANONYMOUS_7' THEN (anonymized)
+         WHEN "participants" LIKE 'ANONYMOUS_33' THEN (anonymized)
+         WHEN "participants" LIKE 'ANONYMOUS_35' THEN (anonymized)
+         WHEN "participants" LIKE 'ANONYMOUS_3' THEN (anonymized)
+         WHEN "participants" LIKE 'ANONYMOUS_39' THEN (anonymized)
+         WHEN "participants" LIKE 'ANONYMOUS_34' THEN (anonymized)
+         WHEN "participants" LIKE 'ANONYMOUS_4' THEN (anonymized)
+         WHEN "participants" LIKE 'ANONYMOUS_26' THEN (anonymized)
+         WHEN "participants" LIKE 'ANONYMOUS_1' THEN (anonymized)
+         WHEN "participants" LIKE 'ANONYMOUS_19' THEN (anonymized)
+         WHEN "participants" LIKE 'ANONYMOUS_48' THEN (anonymized)
+         WHEN "participants" LIKE 'ANONYMOUS_51' THEN (anonymized)
+         WHEN "participants" LIKE 'ANONYMOUS_68' THEN (anonymized)
+         WHEN "participants" LIKE 'ANONYMOUS_142' THEN (anonymized)
+         WHEN "participants" LIKE 'ANONYMOUS_155' THEN (anonymized)
+         WHEN "participants" LIKE 'ANONYMOUS_196' THEN (anonymized)
+         WHEN "participants" LIKE 'ANONYMOUS_206' THEN (anonymized)
+         WHEN "participants" LIKE 'ANONYMOUS_217' THEN (anonymized)
+         WHEN "participants" LIKE 'ANONYMOUS_218' THEN (anonymized)
+         WHEN "participants" LIKE 'ANONYMOUS_216' THEN (anonymized)
+         WHEN "participants" LIKE 'ANONYMOUS_250' THEN (anonymized)
+         WHEN "participants" LIKE 'ANONYMOUS_257' THEN (anonymized)
+         WHEN "participants" LIKE 'ANONYMOUS_260' THEN (anonymized)
+         ELSE PARTICIPANT
+      END AS PARTICIPANT_UPG
+      ,CASE
+         WHEN PARTICIPANT_UPG ILIKE '%(anonymized)%' THEN 'No'
+         ELSE 'Yes'
+       END AS p_outside_upg
+FROM "temp5";
+
+CREATE TEMPORARY TABLE "temp7" AS
+SELECT t1.TOOL
+      ,t1.C_ID
+      ,t1.CALENDAR_ID
+      ,t1.NAME_CALL
+      ,t1.PARTICIPANT_UPG
+      ,t1.P_OUTSIDE_UPG
+      ,t1.CREATED_BY
+      ,t1.OPEN_DATE
+      ,t1.OPEN_TIME
+      ,t1.CLOSE_DATE
+      ,t1.CLOSE_TIME
+      ,t1.C_DURATION_SEC
+      ,t1.ENTRY_DATE
+      ,t1.ENTRY_TIME
+      ,t1.LEAVE_DATE
+      ,t1.LEAVE_TIME
+      ,t1.P_DURATION_SEC
+      ,t1.C_LOCATION
+      --,t1.P_ANONYM
+      --,t1.SLACK_ID
+      --,t1.DEPARTMENT
+      --,t1.SUPERVISOR
+      --,t1.POSITION
+      --,t1.EMPLOYEE_LOCATION
+      --,t1.ANONYM_NICKNAME
+      --,t1."participants"   
+      ,hr."anonym_employee" AS p_anonym_new
+      ,hr."ID" AS slack_id_new
+      ,hr."main_department" AS department_new
+      ,hr."supervisor_email" AS supervisor_new
+      ,hr."position" AS position_new
+      ,hr."location" AS employee_location_new
+      ,hr."nickname_anonymous" AS anonym_nickname_new
+      ,t1.DATE
+      ,t1.C_DURATION_SEC_UPG
+      ,t1.C_DURATION_MIN_UPG
+      ,t1.C_DURATION_MIN_UPG2
+      ,t1.C_DURATION_MIN_UPG3 AS C_DURATION_MIN_UPG_NEW
+FROM "temp6" AS t1
+LEFT JOIN "hr" AS hr
+ON t1.PARTICIPANT_UPG = hr."email";
+
+CREATE TABLE "hng-zoom-slack-hr-upg" AS
+SELECT TOOL
+      ,C_ID
+      ,CALENDAR_ID
+      ,NAME_CALL
+      ,PARTICIPANT_UPG AS PARTICIPANT
+      ,P_OUTSIDE_UPG AS P_OUTSIDE
+      ,CREATED_BY
+      ,OPEN_DATE
+      ,OPEN_TIME
+      ,CLOSE_DATE
+      ,CLOSE_TIME
+      ,C_DURATION_SEC
+      ,ENTRY_DATE
+      ,ENTRY_TIME
+      ,LEAVE_DATE
+      ,LEAVE_TIME
+      ,P_DURATION_SEC
+      ,C_LOCATION
+      ,p_anonym_new AS p_anonym
+      ,slack_id_new AS slack_id
+      ,department_new AS department
+      ,supervisor_new AS supervisor
+      ,position_new AS position
+      ,employee_location_new AS employee_location
+      ,anonym_nickname_new AS anonym_nickname
+      ,DATE
+      ,C_DURATION_SEC_UPG
+      ,C_DURATION_MIN_UPG
+      ,C_DURATION_MIN_UPG2
+      ,C_DURATION_MIN_UPG_NEW
+FROM "temp7";
+
+
