@@ -1,0 +1,13 @@
+CREATE TABLE "hr_table_users" AS
+SELECT t1."email_id" AS "email",
+       t2."ID",
+       t2."Team_ID",
+       t1."main_department",
+       t1."supervisor_email_id" AS "supervisor_email",
+       t1."position",
+       t1."location",
+       t1."full_name" AS "nickname_anonymous",
+       t1."row_id"    
+FROM "hr-table-upg" t1
+LEFT JOIN "users-upg" t2
+ON t1."email_id" = t2."Email";
