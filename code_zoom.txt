@@ -1,0 +1,91 @@
+CREATE TABLE "zoom_copy_upg" AS
+SELECT "name",
+       "id",
+       "created" AS "created_by",
+       "participants",
+       CASE
+         WHEN "scheaduled" ilike '%.%' THEN TO_DATE(SPLIT_PART("scheaduled", ' ', 1),'mm.dd.yyyy')::date
+         WHEN "scheaduled" ilike '%/%' THEN TO_DATE(SPLIT_PART("scheaduled", ' ', 1),'mm/dd/yyyy')::date
+         ELSE 'Máš to blbě'
+       END AS "scheaduled_date",
+       SPLIT_PART("scheaduled", ' ', 2)::time AS "scheaduled_time",
+       CASE
+         WHEN "open" ilike '%.%' THEN TO_DATE(SPLIT_PART("open", ' ', 1),'mm.dd.yyyy')::date
+         WHEN "open" ilike '%/%' THEN TO_DATE(SPLIT_PART("open", ' ', 1),'mm/dd/yyyy')::date
+         ELSE 'Máš to blbě'
+       END AS "open_date",
+       SPLIT_PART("open", ' ', 2)::time AS "open_time",
+       CASE
+         WHEN "close" ilike '%.%' THEN TO_DATE(SPLIT_PART("close", ' ', 1),'mm.dd.yyyy')::date
+         WHEN "close" ilike '%/%' THEN TO_DATE(SPLIT_PART("close", ' ', 1),'mm/dd/yyyy')::date
+         ELSE 'Máš to blbě'
+       END AS "close_date",
+       SPLIT_PART("close", ' ', 2)::time AS "close_time",
+       "duration"::int AS "duration_min",
+       CASE
+         WHEN "entry" ilike '%.%' THEN TO_DATE(SPLIT_PART("entry", ' ', 1),'mm.dd.yyyy')::date
+         WHEN "entry" ilike '%/%' THEN TO_DATE(SPLIT_PART("entry", ' ', 1),'mm/dd/yyyy')::date
+         ELSE 'Máš to blbě'
+       END AS "entry_date",
+       SPLIT_PART("entry", ' ', 2)::time AS "entry_time",
+       CASE
+         WHEN "leave" ilike '%.%' THEN TO_DATE(SPLIT_PART("leave", ' ', 1),'mm.dd.yyyy')::date
+         WHEN "leave" ilike '%/%' THEN TO_DATE(SPLIT_PART("leave", ' ', 1),'mm/dd/yyyy')::date
+         ELSE 'Máš to blbě'
+       END AS "leave_date",
+       SPLIT_PART("leave", ' ', 2)::time AS "leave_time"
+FROM "zoom"
+WHERE "id" != '';
+
+CREATE TABLE "n_participants" AS
+SELECT "open_date" || ' ' || "open_time" AS "start",
+        COUNT(DISTINCT "participants") AS "n_participants"
+FROM "zoom_copy_upg"
+GROUP BY "start";
+
+CREATE TABLE "zoom_copy_upg_upg" AS
+SELECT DISTINCT "open_date" || ' ' || "open_time" AS "start", -- tohle je unikátní klíč, 149 zápisů
+       "id",
+       "name",
+       "created_by",
+       "open_date",
+       "duration_min"
+FROM "zoom_copy_upg" AS t1;
+
+CREATE TABLE "zoom_copy_done" AS -- tohle nepoužiju
+SELECT t1."start",
+       t1."id",
+       t1."name",
+       t1."created_by",
+       t1."open_date",
+       t1."duration_min",
+       t2."n_participants"
+FROM "zoom_copy_upg_upg" t1
+LEFT JOIN "n_participants" t2
+ON t1."start" = t2."start";
+
+CREATE TABLE "zoom_copy_done" AS
+SELECT t1."name",
+       t1."id",
+       t1."created_by",
+       t1."participants",
+       t1."scheaduled_date",
+       t1."scheaduled_time",
+       t1."open_date",
+       t1."open_time",
+       t1."close_date",
+       t1."close_time",
+       t1."duration_min",
+       t1."entry_date",
+       t1."entry_time",
+       t1."leave_date",
+       t1."leave_time",
+       t2."email_id",
+       t2."main_department",
+       t2."supervisor_email_id",
+       t2."position",
+       t2."location",
+       t2."row_id"
+FROM "zoom_copy_upg" t1
+LEFT JOIN "hr_table" t2
+ON t1."participants" = t2."full_name";
