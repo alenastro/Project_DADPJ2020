@@ -1,2 +1,2 @@
-# Projekt_DADPJ2020
-Naše skripty pro účely projektu zpracovávaného v rámci intenzivního kurzu Digitální Akademie pořádaného Czechitas.
+# Project_DADPJ2020
+# Our codes for the purposes of the project processed within the intensive course of the Digital Academy organized by Czechitas.
